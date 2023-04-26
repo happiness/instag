@@ -1,0 +1,6 @@
+instag.instagram_post_add:
+  route_name: instag.instagram_post_add
+  title: 'Add Instagram post'
+  appears_on:
+    - entity.instagram_post.collection
+    - entity.instagram_post.canonical

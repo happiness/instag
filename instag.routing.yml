@@ -1,0 +1,49 @@
+# Route name can be used in several places; e.g. links, redirects, and local
+# actions.
+entity.instagram_post.canonical:
+  path: '/instagram-post/{instagram_post}'
+  defaults:
+    _entity_view: 'instagram_post'
+    _title: 'Instagram post'
+  requirements:
+    _permission: 'view instagram post'
+
+entity.instagram_post.collection:
+  path: '/admin/content/instagram-posts'
+  defaults:
+    _entity_list: 'instagram_post'
+    _title: 'Instagram posts'
+  requirements:
+    _permission: 'administer instagram entity'
+
+instag.instagram_post_add:
+  path: '/instagram-post/add'
+  defaults:
+    _entity_form: instagram_post.add
+    _title: 'Add Instagram post'
+  requirements:
+    _permission: 'add instagram entity'
+
+entity.instagram_post.edit_form:
+  path: '/instagram-post/{instagram_post}/edit'
+  defaults:
+    _entity_form: instagram_post.edit
+    _title: 'Edit Instagram post'
+  requirements:
+    _permission: 'edit instagram entity'
+
+entity.instagram_post.delete_form:
+  path: '/instagram-post/{instagram_post}/delete'
+  defaults:
+    _entity_form: instagram_post.delete
+    _title: 'Delete Instagram post'
+  requirements:
+    _permission: 'delete instagram entity'
+
+instag.settings:
+  path: 'admin/structure/instagram-post-settings'
+  defaults:
+    _form: '\Drupal\instag\Form\InstagramPostSettingsForm'
+    _title: 'Instragram post settings'
+  requirements:
+    _permission: 'administer instagram entity'

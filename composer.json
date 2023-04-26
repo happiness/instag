@@ -1,0 +1,25 @@
+{
+    "name": "drupal/instag",
+    "description": "Provides Instagram integration.",
+    "type": "drupal-module",
+    "keywords": [
+        "Drupal",
+        "Instagram"
+    ],
+    "homepage": "https://www.drupal.org/project/instag",
+    "license": "GPL-2.0-or-later",
+    "authors": [
+        {
+            "name": "Peter Törnstrand",
+            "homepage": "https://www.drupal.org/u/peter-törnstrand",
+            "role": "Maintainer"
+        }
+    ],
+    "support": {
+        "issues": "https://www.drupal.org/project/issues/instag",
+        "source": "https://git.drupalcode.org/project/instag"
+    },
+    "require": {
+        "pgrimaud/instagram-user-feed": "^6.16"
+    }
+}

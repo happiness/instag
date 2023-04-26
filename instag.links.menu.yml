@@ -1,0 +1,11 @@
+entity.instagram_post.collection:
+  title: 'Instagram posts'
+  route_name: entity.instagram_post.collection
+  description: 'List Instragram posts'
+  parent: system.admin_content
+  weight: 10
+instag.admin.structure.settings:
+  title: Instagram post settings
+  description: 'Configure Instagram post entity'
+  route_name:  instag.settings
+  parent: system.admin_structure

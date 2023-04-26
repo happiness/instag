@@ -1,0 +1,11 @@
+view instagram entity:
+  title: 'View Instagram entity'
+add instagram entity:
+  title: 'Add Instagram entity'
+edit instagram entity:
+  title: 'Edit Instagram Entity'
+delete instagram entity:
+  title: 'Delete Instagram entity'
+administer instagram entity:
+  title: 'Administer Instagram entity'
+  restrict access: TRUE

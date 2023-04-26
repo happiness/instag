@@ -1,0 +1,5 @@
+services:
+  instag.commands:
+    class: \Drupal\instag\Commands\InstagramCommands
+    tags:
+      - { name: drush.command }
