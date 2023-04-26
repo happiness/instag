@@ -6,8 +6,10 @@ namespace Drupal\instag;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Config\ImmutableConfig;
+use Drupal\Core\Entity\EntityStorageException;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\StreamWrapper\PublicStream;
+use Drupal\datetime\Plugin\Field\FieldType\DateTimeItemInterface;
 use Drupal\file\FileRepositoryInterface;
 use Drupal\instag\Entity\InstagramPost;
 use GuzzleHttp\Client;
@@ -92,20 +94,24 @@ class InstagramImporter {
    *   Number of imported posts.
    * @throws GuzzleException
    * @throws InvalidArgumentException
+   * @throws EntityStorageException
    */
   public function import(string $user): int {
     $posts = $this->getPosts($user);
     $count = 0;
     /** @var Media $post */
     foreach ($posts as $post) {
+      $date = $post->getDate();
+      $date->setTimezone(new \DateTimezone(DateTimeItemInterface::STORAGE_TIMEZONE));
+      $date_string = $date->format(DateTimeItemInterface::DATETIME_STORAGE_FORMAT);
       $now = time();
       $entity = InstagramPost::create([
         'uuid' => $post->getId(),
         'shortcode' => $post->getShortCode(),
         'title' => $this->getTitle($post),
-        'caption' => $post->getCaption(),
+        'caption' => $this->getCaption($post),
         'type' => $post->getTypeName(),
-        'date' => $post->getDate()->format('Y-m-d h:i:s'),
+        'date' => $date_string,
         'likes' => $post->getLikes(),
         'view_count' => $post->getVideoViewCount(),
         'created' => $now,
@@ -167,6 +173,16 @@ class InstagramImporter {
     $title = explode(", ", $title)[0];
     $title = explode(" ", $title);
     return implode(" ", array_splice($title, 0, 10));
+  }
+
+  /**
+   * Get caption without hashtags.
+   *
+   * @param Media $post
+   * @return string
+   */
+  protected function getCaption(Media $post): string {
+    return preg_replace('/#([^ \\r\ \	]+)/', '', $post->getCaption());
   }
 
 }

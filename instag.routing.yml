@@ -23,6 +23,8 @@ instag.instagram_post_add:
     _title: 'Add Instagram post'
   requirements:
     _permission: 'add instagram entity'
+  options:
+    _admin_route: TRUE
 
 entity.instagram_post.edit_form:
   path: '/instagram-post/{instagram_post}/edit'
@@ -31,6 +33,8 @@ entity.instagram_post.edit_form:
     _title: 'Edit Instagram post'
   requirements:
     _permission: 'edit instagram entity'
+  options:
+    _admin_route: TRUE
 
 entity.instagram_post.delete_form:
   path: '/instagram-post/{instagram_post}/delete'
@@ -39,6 +43,8 @@ entity.instagram_post.delete_form:
     _title: 'Delete Instagram post'
   requirements:
     _permission: 'delete instagram entity'
+  options:
+    _admin_route: TRUE
 
 instag.settings:
   path: 'admin/structure/instagram-post-settings'

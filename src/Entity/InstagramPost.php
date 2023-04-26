@@ -67,38 +67,116 @@ class InstagramPost extends ContentEntityBase implements ContentEntityInterface 
     $fields['shortcode'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Shortcode'))
       ->setDescription(t('The shortcode of the entity.'))
-      ->setReadOnly(TRUE);
+      ->setReadOnly(TRUE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'string',
+        'weight' => 2,
+      ])
+      ->setDisplayConfigurable('view', TRUE);
+
+    // User, the user this post was created by.
+    $fields['user'] = BaseFieldDefinition::create('string')
+      ->setLabel(t('User'))
+      ->setDescription(t('The user this post was created by.'))
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'string',
+        'weight' => 2,
+      ])
+      ->setDisplayConfigurable('view', TRUE);
 
     // Title field, computed based on the caption.
     $fields['title'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Title'))
-      ->setDescription(t('The title of the entity.'));
+      ->setDescription(t('The title of the post.'))
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'string',
+        'weight' => 3,
+      ])
+      ->setDisplayOptions('form', [
+        'type' => 'string_textfield',
+        'weight' => 3,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
 
     // Caption, the text of the post.
     $fields['caption'] = BaseFieldDefinition::create('string_long')
       ->setLabel(t('Caption'))
-      ->setDescription(t('The caption of the entity.'));
+      ->setDescription(t('The caption of the post.'))
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'string_textarea',
+        'weight' => 4,
+      ])
+      ->setDisplayOptions('form', [
+        'type' => 'string_textarea',
+        'weight' => 4,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
 
     // Type, the type of the post. Can be either GraphImage or GraphSidecar.
     $fields['type'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Type'))
       ->setDescription(t('The type of the entity.'))
-      ->setReadOnly(TRUE);
+      ->setReadOnly(TRUE)
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'string',
+        'weight' => 5,
+      ])
+      ->setDisplayConfigurable('view', TRUE);
 
     // Date, the date the post was published.
     $fields['date'] = BaseFieldDefinition::create('datetime')
       ->setLabel(t('Date'))
-      ->setDescription('The date the post was published.');
+      ->setDescription('The date the post was published.')
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'datetime_default',
+        'weight' => 6,
+      ])
+      ->setDisplayOptions('form', [
+        'type' => 'datetime_default',
+        'weight' => 6,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
 
     // Likes, number of likes.
     $fields['likes'] = BaseFieldDefinition::create('integer')
       ->setLabel(t('Likes'))
-      ->setDescription(t('Number of likes.'));
+      ->setDescription(t('Number of likes.'))
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'number',
+        'weight' => 7,
+      ])
+      ->setDisplayOptions('form', [
+        'type' => 'number',
+        'weight' => 7,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
 
     // View count, number of views a video has.
     $fields['view_count'] = BaseFieldDefinition::create('integer')
       ->setLabel(t('Video view count'))
-      ->setDescription(t('Number of views a video has.'));
+      ->setDescription(t('Number of views a video has.'))
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'number',
+        'weight' => 8,
+      ])
+      ->setDisplayOptions('form', [
+        'type' => 'number',
+        'weight' => 8,
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
 
     // Created, the timestamp for when the entity was created.
     $fields['created'] = BaseFieldDefinition::create('created')
