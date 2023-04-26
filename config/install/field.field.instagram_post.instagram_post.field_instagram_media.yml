@@ -1,0 +1,30 @@
+status: true
+dependencies:
+  config:
+    - field.storage.instagram_post.field_instagram_media
+    - media.type.instagram_image
+    - media.type.instagram_video
+  module:
+    - instag
+id: instagram_post.instagram_post.field_instagram_media
+field_name: field_instagram_media
+entity_type: instagram_post
+bundle: instagram_post
+label: Media
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:media'
+  handler_settings:
+    target_bundles:
+      instagram_image: instagram_image
+      instagram_video: instagram_video
+    sort:
+      field: _none
+      direction: ASC
+    auto_create: false
+    auto_create_bundle: instagram_image
+field_type: entity_reference

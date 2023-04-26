@@ -1,0 +1,30 @@
+status: true
+dependencies:
+  config:
+    - core.entity_view_mode.media.media_library
+    - field.field.media.instagram_video.field_media_video_file
+    - image.style.medium
+    - media.type.instagram_video
+  module:
+    - image
+id: media.instagram_video.media_library
+targetEntityType: media
+bundle: instagram_video
+mode: media_library
+content:
+  thumbnail:
+    type: image
+    label: hidden
+    settings:
+      image_link: ''
+      image_style: medium
+      image_loading:
+        attribute: lazy
+    third_party_settings: {  }
+    weight: 0
+    region: content
+hidden:
+  created: true
+  field_media_video_file: true
+  name: true
+  uid: true

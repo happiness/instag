@@ -1,0 +1,25 @@
+status: true
+dependencies:
+  config:
+    - field.storage.media.field_media_video_file
+    - media.type.instagram_video
+  module:
+    - file
+id: media.instagram_video.field_media_video_file
+field_name: field_media_video_file
+entity_type: media
+bundle: instagram_video
+label: 'Video file'
+description: ''
+required: true
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:file'
+  handler_settings: {  }
+  file_directory: 'instagram/[date:custom:Y]-[date:custom:m]'
+  file_extensions: mp4
+  max_filesize: ''
+  description_field: false
+field_type: file
