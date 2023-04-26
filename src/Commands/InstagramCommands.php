@@ -6,7 +6,6 @@ namespace Drupal\instag\Commands;
 
 use Drush\Commands\DrushCommands;
 use Symfony\Component\Console\Output\ConsoleOutput;
-use \Consolidation\OutputFormatters\Formatters\JsonFormatter;
 
 /**
  * Drush commands.
@@ -16,13 +15,18 @@ class InstagramCommands extends DrushCommands {
   /**
    * Import instagram posts.
    *
+   * @param string $user
+   *   The Instagram account name of the posts to import.
    * @command instag:import
-   * @usage drush instag:import
+   * @usage drush instag:import thisisbillgates
    */
-  public function import(): void {
+  public function import(string $user): void {
+    /** @var \Drupal\instag\InstagramImporter $importer */
+    $importer = \Drupal::service('instag.importer');
+    $count = $importer->import($user);
 
     $output = new ConsoleOutput();
-    $output->writeln('Imported Instragram posts.');
+    $output->writeln(sprintf('Imported %d Instragram posts.', $count));
   }
 
 }

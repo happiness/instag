@@ -9,9 +9,12 @@ use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\StreamWrapper\PublicStream;
 use Drupal\file\FileRepositoryInterface;
+use Drupal\instag\Entity\InstagramPost;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Instagram\Exception\InstagramAuthException;
+use Instagram\Exception\InstagramException;
+use Instagram\Model\Media;
 use Psr\Cache\InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 use Instagram\Api;
@@ -32,15 +35,15 @@ class InstagramImporter {
   /**
    * InstagramImporter constructor.
    *
-   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   * @param ConfigFactoryInterface $config_factory
    *   The config factory service.
-   * @param \Psr\Log\LoggerInterface $logger
+   * @param LoggerInterface $logger
    *   The logger.
-   * @param \Drupal\file\FileRepositoryInterface $fileRepository
+   * @param FileRepositoryInterface $fileRepository
    *   The file repository.
-   * @param \Drupal\Core\File\FileSystemInterface $fileSystem
+   * @param FileSystemInterface $fileSystem
    *   The file system.
-   * @param \GuzzleHttp\Client $client
+   * @param Client $client
    *   The HTTP client.
    */
   public function __construct(ConfigFactoryInterface $config_factory, LoggerInterface $logger, FileRepositoryInterface $fileRepository, FileSystemInterface $fileSystem, Client $client) {
@@ -80,4 +83,90 @@ class InstagramImporter {
       $this->logger->error('Failed to login to Instagram. Message was: ' . $e->getMessage());
     }
   }
+
+  /**
+   * Import posts to instagram_post entity.
+   *
+   * @param string $user
+   * @return int
+   *   Number of imported posts.
+   * @throws GuzzleException
+   * @throws InvalidArgumentException
+   */
+  public function import(string $user): int {
+    $posts = $this->getPosts($user);
+    $count = 0;
+    /** @var Media $post */
+    foreach ($posts as $post) {
+      $now = time();
+      $entity = InstagramPost::create([
+        'uuid' => $post->getId(),
+        'shortcode' => $post->getShortCode(),
+        'title' => $this->getTitle($post),
+        'caption' => $post->getCaption(),
+        'type' => $post->getTypeName(),
+        'date' => $post->getDate()->format('Y-m-d h:i:s'),
+        'likes' => $post->getLikes(),
+        'view_count' => $post->getVideoViewCount(),
+        'created' => $now,
+        'changed' => $now,
+      ]);
+
+      // Video.
+      //$post->getVideoUrl();
+
+      // Image.
+      //$post->getDisplaySrc();
+
+      // Tags.
+      //implode(", ", $post->getHashtags());
+
+      $entity->save();
+      $count++;
+    }
+
+    return $count;
+  }
+
+  /**
+   * Get posts from Instagram.
+   *
+   * @param string $user
+   * @return array
+   * @throws GuzzleException
+   * @throws InvalidArgumentException
+   */
+  protected function getPosts(string $user): array {
+    $posts = [];
+    try {
+      $this->login();
+      $profile = $this->api->getProfile($user);
+      $posts = $profile->getMedias();
+      do {
+        $profile = $this->api->getMoreMedias($profile);
+        $posts += $profile->getMedias();
+        sleep(1);
+      } while ($profile->hasMoreMedias());
+    }
+    catch (InstagramException $e) {
+      $this->logger->error('Failed to import Instagram posts. Message was: ' . $e->getMessage());
+    }
+
+    return $posts;
+  }
+
+  /**
+   * Assemble a title that is suitable for a entity title.
+   *
+   * @param Media $post
+   * @return string
+   */
+  protected function getTitle(Media $post): string {
+    $title = explode("! ", $post->getCaption())[0];
+    $title = explode(". ", $title)[0];
+    $title = explode(", ", $title)[0];
+    $title = explode(" ", $title);
+    return implode(" ", array_splice($title, 0, 10));
+  }
+
 }

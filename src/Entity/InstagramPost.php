@@ -42,6 +42,10 @@ use Drupal\Core\Field\BaseFieldDefinition;
  */
 class InstagramPost extends ContentEntityBase implements ContentEntityInterface {
 
+  public function label() {
+    return $this->title->value;
+  }
+
   /**
    * @inheritdoc
    */
@@ -85,6 +89,16 @@ class InstagramPost extends ContentEntityBase implements ContentEntityInterface 
     $fields['date'] = BaseFieldDefinition::create('datetime')
       ->setLabel(t('Date'))
       ->setDescription('The date the post was published.');
+
+    // Likes, number of likes.
+    $fields['likes'] = BaseFieldDefinition::create('integer')
+      ->setLabel(t('Likes'))
+      ->setDescription(t('Number of likes.'));
+
+    // View count, number of views a video has.
+    $fields['view_count'] = BaseFieldDefinition::create('integer')
+      ->setLabel(t('Video view count'))
+      ->setDescription(t('Number of views a video has.'));
 
     // Created, the timestamp for when the entity was created.
     $fields['created'] = BaseFieldDefinition::create('created')
