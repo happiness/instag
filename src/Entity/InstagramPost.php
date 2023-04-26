@@ -5,6 +5,7 @@ namespace Drupal\instag\Entity;
 
 use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Entity\ContentEntityInterface;
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 
@@ -42,8 +43,25 @@ use Drupal\Core\Field\BaseFieldDefinition;
  */
 class InstagramPost extends ContentEntityBase implements ContentEntityInterface {
 
+  /**
+   * {@inheritdoc}
+   */
   public function label() {
     return $this->title->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getCreatedTime() {
+    return $this->get('created')->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getChangedTime() {
+    return $this->get('changed')->value;
   }
 
   /**
@@ -189,5 +207,27 @@ class InstagramPost extends ContentEntityBase implements ContentEntityInterface 
       ->setDescription(t('The time that the entity was last edited.'));
 
     return $fields;
+  }
+
+  /**
+   * Load entity by UUID.
+   *
+   * @param int $uuid
+   *
+   * @return \Drupal\Core\Entity\EntityInterface|null
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+   */
+  public static function loadByUUID(int $uuid) {
+    $entity_type_manager = \Drupal::entityTypeManager();
+    $storage = $entity_type_manager->getStorage('instagram_post');
+    $query = $storage->getQuery();
+    $query->accessCheck(FALSE);
+    $query->condition('uuid', $uuid);
+    $ids = $query->execute();
+    if (empty($ids)) {
+      return NULL;
+    }
+    return $storage->load(reset($ids));
   }
 }

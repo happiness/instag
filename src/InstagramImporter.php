@@ -12,11 +12,14 @@ use Drupal\Core\StreamWrapper\PublicStream;
 use Drupal\datetime\Plugin\Field\FieldType\DateTimeItemInterface;
 use Drupal\file\FileRepositoryInterface;
 use Drupal\instag\Entity\InstagramPost;
+use Drupal\media\MediaInterface;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Instagram\Exception\InstagramAuthException;
 use Instagram\Exception\InstagramException;
 use Instagram\Model\Media;
+use Instagram\Model\MediaDetailed;
+use Instagram\Utils\MediaDownloadHelper;
 use Psr\Cache\InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 use Instagram\Api;
@@ -90,39 +93,60 @@ class InstagramImporter {
    * Import posts to instagram_post entity.
    *
    * @param string $user
+   *
    * @return int
    *   Number of imported posts.
-   * @throws GuzzleException
-   * @throws InvalidArgumentException
-   * @throws EntityStorageException
+   *
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+   * @throws \Drupal\Core\Entity\EntityStorageException
+   * @throws \Drupal\Core\TypedData\Exception\ReadOnlyException
+   * @throws \GuzzleHttp\Exception\GuzzleException
+   * @throws \Instagram\Exception\InstagramAuthException
+   * @throws \Instagram\Exception\InstagramFetchException
+   * @throws \Psr\Cache\InvalidArgumentException
    */
   public function import(string $user): int {
     $posts = $this->getPosts($user);
     $count = 0;
+
     /** @var Media $post */
     foreach ($posts as $post) {
+      // Load existing post.
+      $entity = InstagramPost::loadByUUID($post->getId());
+
+      // Convert date to storage format.
       $date = $post->getDate();
       $date->setTimezone(new \DateTimezone(DateTimeItemInterface::STORAGE_TIMEZONE));
       $date_string = $date->format(DateTimeItemInterface::DATETIME_STORAGE_FORMAT);
+
+      // Timestamp for created and changed.
       $now = time();
-      $entity = InstagramPost::create([
-        'uuid' => $post->getId(),
-        'shortcode' => $post->getShortCode(),
-        'title' => $this->getTitle($post),
-        'caption' => $this->getCaption($post),
-        'type' => $post->getTypeName(),
-        'date' => $date_string,
-        'likes' => $post->getLikes(),
-        'view_count' => $post->getVideoViewCount(),
-        'created' => $now,
-        'changed' => $now,
-      ]);
 
-      // Video.
-      //$post->getVideoUrl();
+      // Create Instagram post.
+      if (is_null($entity)) {
+        $entity = InstagramPost::create([
+          'uuid' => $post->getId(),
+          'shortcode' => $post->getShortCode(),
+          'title' => $this->getTitle($post),
+          'caption' => $this->getCaption($post),
+          'type' => $post->getTypeName(),
+          'date' => $date_string,
+          'likes' => $post->getLikes(),
+          'view_count' => $post->getVideoViewCount(),
+          'created' => $now,
+          'changed' => $now,
+        ]);
 
-      // Image.
-      //$post->getDisplaySrc();
+        // Create media entities and add reference from post.
+        $media_entities = $this->createMediaEntities($post);
+        $entity->get('field_instagram_media')->setValue($media_entities);
+      }
+      else {
+        // Update fields.
+        $entity->get('likes')->setValue($post->getLikes());
+        $entity->get('view_count')->setValue($post->getVideoViewCount());
+      }
 
       // Tags.
       //implode(", ", $post->getHashtags());
@@ -148,6 +172,7 @@ class InstagramImporter {
       $this->login();
       $profile = $this->api->getProfile($user);
       $posts = array_merge([], $profile->getMedias());
+      return $posts; // @todo Temporary return to avoid fetching more posts.
       do {
         $profile = $this->api->getMoreMedias($profile);
         $posts = array_merge($posts, $profile->getMedias());
@@ -155,7 +180,7 @@ class InstagramImporter {
       } while ($profile->hasMoreMedias());
     }
     catch (InstagramException $e) {
-      $this->logger->error('Failed to import Instagram posts. Message was: ' . $e->getMessage());
+      $this->logger->error('Failed to fetch Instagram posts. Message was: ' . $e->getMessage());
     }
 
     return $posts;
@@ -172,7 +197,14 @@ class InstagramImporter {
     $title = explode(". ", $title)[0];
     $title = explode(", ", $title)[0];
     $title = explode(" ", $title);
-    return implode(" ", array_splice($title, 0, 10));
+    $title = implode(" ", array_splice($title, 0, 10));
+
+    // If post has no title use shortcode.
+    if (empty($title)) {
+      $title = $post->getShortCode();
+    }
+
+    return $title;
   }
 
   /**
@@ -183,6 +215,112 @@ class InstagramImporter {
    */
   protected function getCaption(Media $post): string {
     return preg_replace('/#([^ \\r\ \	]+)/', '', $post->getCaption() ?? '');
+  }
+
+  /**
+   * @param \Instagram\Model\Media $post
+   *
+   * @return array
+   * @throws \Drupal\Core\Entity\EntityStorageException
+   * @throws \Drupal\Core\TypedData\Exception\ReadOnlyException
+   * @throws \Instagram\Exception\InstagramAuthException
+   * @throws \Instagram\Exception\InstagramFetchException
+   */
+  protected function createMediaEntities(Media $post): array {
+    // Prepare target directory.
+    // @todo Fetch the destination directory from the field instance settings.
+    $destination = 'public://instagram/' . date('Y-m');
+    $this->fileSystem->prepareDirectory($destination, FileSystemInterface::CREATE_DIRECTORY | FileSystemInterface::MODIFY_PERMISSIONS);
+
+    // Get all media items for post.
+    $items = $this->getMediaItems($post);
+    $media_entities = [];
+    foreach ($items as $item) {
+      // Assemble filename.
+      $filename = substr(str_replace('/', '-', parse_url($item['url'], PHP_URL_PATH)), 1);
+
+      // Get image from remote server and create the file.
+      try {
+        $response = $this->client->get($item['url']);
+        $file_data = $response->getBody()->getContents();
+        $file = $this->fileRepository->writeData($file_data, $destination . '/' . $filename);
+      }
+      catch (GuzzleException $e) {
+        $this->logger->error('Failed to download media @uri. Message was: @message', ['@uri' => $item['url'], '@message' => $e->getMessage()]);
+        continue;
+      }
+
+      // Create the media entity.
+      $media = \Drupal\media\Entity\Media::create([
+        'bundle' => $item['bundle'],
+        'status' => 1
+      ]);
+      $media->get($item['field'])->setValue(['target_id' => $file->id()]);
+      $media->save();
+      $media_entities[] = $media;
+    }
+
+    return $media_entities;
+  }
+
+  /**
+   * Get all media items.
+   *
+   * @param \Instagram\Model\Media $post
+   *
+   * @return array
+   * @throws \Instagram\Exception\InstagramAuthException
+   * @throws \Instagram\Exception\InstagramFetchException
+   */
+  protected function getMediaItems(Media $post): array {
+    $items = [];
+    if ($post->getTypeName() == 'GraphSidecar') {
+      $sidecar = new Media();
+      $sidecar->setLink(sprintf('https://www.instagram.com/p/%s/', $post->getShortCode()));
+      $detailed = $this->api->getMediaDetailed($sidecar);
+      $a = $detailed->getSideCarItems();
+      foreach ($a as $item) {
+        $items[] = $this->getMediaItem($item);
+      }
+    }
+    else {
+      $items[] = $this->getMediaItem($post);
+    }
+
+    return $items;
+  }
+
+  /**
+   * Get a single media item.
+   *
+   * @param \Instagram\Model\Media|\Instagram\Model\MediaDetailed $media
+   *
+   * @return array
+   */
+  protected function getMediaItem(Media|MediaDetailed $media): array {
+    if ($media->getVideoUrl()) {
+      $item = [
+        'bundle' => 'instagram_video',
+        'field' => 'field_media_video_file',
+        'url' => $media->getVideoUrl(),
+      ];
+    }
+    else {
+      $item = [
+        'bundle' => 'instagram_image',
+        'field' => 'field_media_image',
+      ];
+
+      if ($media instanceof MediaDetailed) {
+        $resources = $media->getDisplayResources();
+        $item['url'] = end($resources)->url;
+      }
+      else {
+        $item['url'] = $media->getDisplaySrc();
+      }
+    }
+
+    return $item;
   }
 
 }

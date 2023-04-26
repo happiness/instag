@@ -2,3 +2,5 @@ name: Instagram
 core_version_requirement: ^9 || ^10
 description: Instagram integration.
 type: module
+dependencies:
+  - drupal:media

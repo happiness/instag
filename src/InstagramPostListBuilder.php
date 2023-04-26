@@ -2,14 +2,40 @@
 
 namespace Drupal\instag;
 
+use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityListBuilder;
+use Drupal\Core\Entity\EntityStorageInterface;
+use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Url;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Provides a list controller for instagram_post entity.
  */
 class InstagramPostListBuilder extends EntityListBuilder {
+
+  protected DateFormatterInterface $dateFormatter;
+
+  /**
+   * {@inheritdoc}
+   */
+  public function __construct(EntityTypeInterface $entity_type, EntityStorageInterface $storage, DateFormatterInterface $date_formatter) {
+    parent::__construct($entity_type, $storage);
+
+    $this->dateFormatter = $date_formatter;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function createInstance(ContainerInterface $container, EntityTypeInterface $entity_type) {
+    return new static(
+      $entity_type,
+      $container->get('entity_type.manager')->getStorage($entity_type->id()),
+      $container->get('date.formatter')
+    );
+  }
 
   /**
    * {@inheritdoc}
@@ -43,10 +69,10 @@ class InstagramPostListBuilder extends EntityListBuilder {
   public function buildRow(EntityInterface $entity) {
     /* @var $entity \Drupal\instag\Entity\InstagramPost */
     $row['id'] = $entity->id();
-    $row['title'] = $entity->label();
-    $row['date'] = $entity->date->value;
-    $row['created'] = $entity->created->value;
-    $row['changed'] = $entity->changed->value;
+    $row['title'] = $entity->toLink()->toString();
+    $row['date'] = $this->dateFormatter->format(strtotime($entity->date->value), 'short');
+    $row['created'] = $this->dateFormatter->format($entity->getCreatedTime(), 'short');
+    $row['changed'] =$this->dateFormatter->format($entity->getChangedTime(), 'short');
     return $row + parent::buildRow($entity);
   }
 
