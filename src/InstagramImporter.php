@@ -172,7 +172,6 @@ class InstagramImporter {
       $this->login();
       $profile = $this->api->getProfile($user);
       $posts = array_merge([], $profile->getMedias());
-      return $posts; // @todo Temporary return to avoid fetching more posts.
       do {
         $profile = $this->api->getMoreMedias($profile);
         $posts = array_merge($posts, $profile->getMedias());
