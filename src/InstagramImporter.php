@@ -217,6 +217,8 @@ class InstagramImporter {
   }
 
   /**
+   * Create media entities for post.
+   *
    * @param \Instagram\Model\Media $post
    *
    * @return array
