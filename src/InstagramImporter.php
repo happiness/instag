@@ -147,10 +147,10 @@ class InstagramImporter {
     try {
       $this->login();
       $profile = $this->api->getProfile($user);
-      $posts = $profile->getMedias();
+      $posts = array_merge([], $profile->getMedias());
       do {
         $profile = $this->api->getMoreMedias($profile);
-        $posts += $profile->getMedias();
+        $posts = array_merge($posts, $profile->getMedias());
         sleep(1);
       } while ($profile->hasMoreMedias());
     }
@@ -168,7 +168,7 @@ class InstagramImporter {
    * @return string
    */
   protected function getTitle(Media $post): string {
-    $title = explode("! ", $post->getCaption())[0];
+    $title = explode("! ", $post->getCaption() ?? '')[0];
     $title = explode(". ", $title)[0];
     $title = explode(", ", $title)[0];
     $title = explode(" ", $title);
@@ -182,7 +182,7 @@ class InstagramImporter {
    * @return string
    */
   protected function getCaption(Media $post): string {
-    return preg_replace('/#([^ \\r\ \	]+)/', '', $post->getCaption());
+    return preg_replace('/#([^ \\r\ \	]+)/', '', $post->getCaption() ?? '');
   }
 
 }
