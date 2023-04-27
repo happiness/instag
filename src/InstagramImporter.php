@@ -64,11 +64,32 @@ class InstagramImporter {
   }
 
   /**
+   * Make sure all settings are set.
+   *
+   * @return bool
+   * @throws \Exception
+   */
+  protected function checkSettings(): bool {
+    $values = ['username', 'password', 'cache_dir', 'cache_lifetime'];
+    foreach ($values as $value) {
+      $val = $this->config->get($value);
+      if (empty($val)) {
+        throw new \Exception(sprintf('Instagram configuration key "%s" is not set.', $value));
+      }
+    }
+    return TRUE;
+  }
+
+  /**
    * Init Instagram API.
    *
    * @return void
+   * @throws \Exception
    */
   protected function initApi(): void {
+    // Check settings.
+    $this->checkSettings();
+
     // Init Instagram API.
     $cache_dir = PublicStream::basePath() . '/' . $this->config->get('cache_dir');
     $cache_lifetime = $this->config->get('cache_lifetime');
