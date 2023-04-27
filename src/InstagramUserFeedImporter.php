@@ -251,8 +251,8 @@ class InstagramUserFeedImporter implements InstagramImporterInterface {
       $posts = array_merge([], $hashtag->getMedias());
 
       while ($cursor = $hashtag->getEndCursor()) {
-        $medias = $this->api->getMoreHashtagMedias($tag, $cursor);
-        $posts = array_merge($posts, $medias);
+        $hashtag = $this->api->getMoreHashtagMedias($tag, $cursor);
+        $posts = array_merge($posts, $hashtag->getMedias());
         $count++;
         if ($count >= $max) break;
         sleep(1);
