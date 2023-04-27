@@ -15,6 +15,17 @@ interface InstagramImporterInterface {
    * @return int
    *   Number of imported posts.
    */
-  public function import(string $user): int;
+  public function importProfile(string $user): int;
+
+  /**
+   * Import Instagram posts with specific hashtag to instagram_post entity.
+   *
+   * @param string $tag
+   *  The hashtag.
+   *
+   * @return int
+   *   Number of imported posts.
+   */
+  public function importTag(string $tag): int;
 
 }

@@ -115,9 +115,25 @@ class InstagramUserFeedImporter implements InstagramImporterInterface {
   }
 
   /**
-   * Import posts to instagram_post entity.
+   * {@inheritdoc}
+   */
+  public function importProfile(string $user): int {
+    $posts = $this->getPosts($user, $user);
+    return $this->import($posts);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function importTag(string $tag): int {
+    $posts = $this->getPostsByTag($tag);
+    return $this->import($posts, NULL);
+  }
+
+  /**
+   * Import posts.
    *
-   * @param string $user
+   * @param array $posts
    *
    * @return int
    *   Number of imported posts.
@@ -126,13 +142,10 @@ class InstagramUserFeedImporter implements InstagramImporterInterface {
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    * @throws \Drupal\Core\Entity\EntityStorageException
    * @throws \Drupal\Core\TypedData\Exception\ReadOnlyException
-   * @throws \GuzzleHttp\Exception\GuzzleException
    * @throws \Instagram\Exception\InstagramAuthException
    * @throws \Instagram\Exception\InstagramFetchException
-   * @throws \Psr\Cache\InvalidArgumentException
    */
-  public function import(string $user): int {
-    $posts = $this->getPosts($user);
+  protected function import(array $posts, string|null $user): int {
     $count = 0;
 
     /** @var Media $post */
@@ -153,6 +166,7 @@ class InstagramUserFeedImporter implements InstagramImporterInterface {
         $entity = InstagramPost::create([
           'uuid' => $post->getId(),
           'shortcode' => $post->getShortCode(),
+          'user' => $user,
           'title' => $this->getTitle($post),
           'caption' => $this->getCaption($post),
           'type' => $post->getTypeName(),
@@ -189,7 +203,9 @@ class InstagramUserFeedImporter implements InstagramImporterInterface {
    * Get posts from Instagram.
    *
    * @param string $user
+   *   The username.
    * @return array
+   *
    * @throws GuzzleException
    * @throws InvalidArgumentException
    */
@@ -205,6 +221,37 @@ class InstagramUserFeedImporter implements InstagramImporterInterface {
         $posts = array_merge($posts, $profile->getMedias());
         sleep(1);
       } while ($profile->hasMoreMedias());
+    }
+    catch (InstagramException $e) {
+      $this->logger->error('Failed to fetch Instagram posts. Message was: ' . $e->getMessage());
+    }
+
+    return $posts;
+  }
+
+  /**
+   * Get posts by hashtag.
+   *
+   * @param string $tag
+   *   The hashtag.
+   * @return array
+   *
+   * @throws \GuzzleHttp\Exception\GuzzleException
+   * @throws \Psr\Cache\InvalidArgumentException
+   */
+  protected function getPostsByTag(string $tag): array {
+    $posts = [];
+    try {
+      $this->login();
+      $hashtag = $this->api->getHashtag($tag);
+      sleep(1);
+      $posts = array_merge([], $hashtag->getMedias());
+
+      while ($cursor = $hashtag->getEndCursor()) {
+        $medias = $this->api->getMoreHashtagMedias($tag, $cursor);
+        $posts = array_merge($posts, $medias);
+        sleep(1);
+      }
     }
     catch (InstagramException $e) {
       $this->logger->error('Failed to fetch Instagram posts. Message was: ' . $e->getMessage());

@@ -56,6 +56,7 @@ class InstagramPostListBuilder extends EntityListBuilder {
    */
   public function buildHeader() {
     $header['id'] = $this->t('ID');
+    $header['user'] = $this->t('User');
     $header['title'] = $this->t('Title');
     $header['date'] = $this->t('Date');
     $header['created'] = $this->t('Created');
@@ -69,6 +70,7 @@ class InstagramPostListBuilder extends EntityListBuilder {
   public function buildRow(EntityInterface $entity) {
     /* @var $entity \Drupal\instag\Entity\InstagramPost */
     $row['id'] = $entity->id();
+    $row['user'] = $entity->user->value;
     $row['title'] = $entity->toLink()->toString();
     $row['date'] = $this->dateFormatter->format(strtotime($entity->date->value), 'short');
     $row['created'] = $this->dateFormatter->format($entity->getCreatedTime(), 'short');
