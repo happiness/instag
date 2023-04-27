@@ -198,6 +198,7 @@ class InstagramUserFeedImporter implements InstagramImporterInterface {
     try {
       $this->login();
       $profile = $this->api->getProfile($user);
+      sleep(1);
       $posts = array_merge([], $profile->getMedias());
       do {
         $profile = $this->api->getMoreMedias($profile);
