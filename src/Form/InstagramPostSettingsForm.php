@@ -35,7 +35,7 @@ class InstagramPostSettingsForm extends ConfigFormBase {
     $config = $this->config('instag.settings');
 
     $form['help'] = [
-      '#markup' => $this->t('Enter your Instagram credentials and configure the cache settings here. To import Instagram posts, run the following Drush command: <code>drush instag:import [username]</code>.'),
+      '#markup' => $this->t('Enter your Instagram credentials and configure the cache settings here. To import Instagram posts, run the following Drush command: <code>drush instag:import [username]</code> or <code>drush instag:import-tag [hashtag]</code>.'),
     ];
 
     $form['auth'] = [
