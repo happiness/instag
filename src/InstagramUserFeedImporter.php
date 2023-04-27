@@ -175,6 +175,7 @@ class InstagramUserFeedImporter implements InstagramImporterInterface {
         // Update fields.
         $entity->get('likes')->setValue($post->getLikes());
         $entity->get('view_count')->setValue($post->getVideoViewCount());
+        $entity->get('changed')->setValue($now);
       }
 
       $entity->save();
