@@ -92,7 +92,7 @@ class InstagramImporter {
 
     // Init Instagram API.
     $cache_dir = PublicStream::basePath() . '/' . $this->config->get('cache_dir');
-    $cache_lifetime = $this->config->get('cache_lifetime');
+    $cache_lifetime = (int) $this->config->get('cache_lifetime');
     $cache = new FilesystemAdapter('instag', $cache_lifetime, $cache_dir);
     $this->api = new Api($cache, $this->client);
   }
@@ -339,7 +339,7 @@ class InstagramImporter {
 
       if ($media instanceof MediaDetailed) {
         $resources = $media->getDisplayResources();
-        $item['url'] = end($resources)->url;
+        $item['url'] = $resources[0]->url;
       }
       else {
         $item['url'] = $media->getDisplaySrc();

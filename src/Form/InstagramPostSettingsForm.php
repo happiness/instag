@@ -87,7 +87,7 @@ class InstagramPostSettingsForm extends ConfigFormBase {
     $values = $form_state->getValues();
     $this->config('instag.settings')
       ->set('username', $values['username'])
-      ->set('cache_lifetime', $values['cache_lifetime']);
+      ->set('cache_lifetime', (int)$values['cache_lifetime']);
 
     // Make sure the cache directory exists and is writable.
     if (!empty($values['cache_dir'])) {
