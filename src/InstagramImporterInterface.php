@@ -9,9 +9,12 @@ interface InstagramImporterInterface {
   /**
    * Import Instagram posts to instagram_post entity.
    *
+   * @param string $user
+   *   The instagram user.
+   *
    * @return int
    *   Number of imported posts.
    */
-  public function import(): int;
+  public function import(string $user): int;
 
 }

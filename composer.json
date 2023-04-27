@@ -21,7 +21,6 @@
     },
     "require": {
         "pgrimaud/instagram-user-feed": "^6.16",
-        "orsifrancesco/instagram-without-api": "^1.0",
         "drush/drush": "^10.0"
     }
 }
