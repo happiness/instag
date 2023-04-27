@@ -66,7 +66,7 @@ class InstagramPostSettingsForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Directory'),
       '#required' => TRUE,
-      '#description' => $this->t('Enter the name of directory, without starting or trailing slash, to hold API cache data. The directory will be created in the files directory.'),
+      '#description' => $this->t('Enter the name of directory, without starting or trailing slash, to hold API cache data. The directory will be created in the public files directory.'),
       '#default_value' => $config->get('cache_dir'),
     ];
 
