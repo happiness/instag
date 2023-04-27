@@ -1,0 +1,28 @@
+status: true
+dependencies:
+  config:
+    - field.storage.instagram_post.field_instagram_tags
+    - taxonomy.vocabulary.instagram_tags
+  module:
+    - instag
+id: instagram_post.instagram_post.field_instagram_tags
+field_name: field_instagram_tags
+entity_type: instagram_post
+bundle: instagram_post
+label: Tags
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:taxonomy_term'
+  handler_settings:
+    target_bundles:
+      instagram_tags: instagram_tags
+    sort:
+      field: name
+      direction: asc
+    auto_create: false
+    auto_create_bundle: ''
+field_type: entity_reference

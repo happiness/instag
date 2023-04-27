@@ -4,3 +4,4 @@ description: Instagram integration.
 type: module
 dependencies:
   - drupal:media
+  - drupal:taxonomy

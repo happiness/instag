@@ -2,6 +2,7 @@ status: true
 dependencies:
   config:
     - field.field.instagram_post.instagram_post.field_instagram_media
+    - field.field.instagram_post.instagram_post.field_instagram_tags
   module:
     - datetime
     - instag
@@ -35,6 +36,14 @@ content:
       link: false
     third_party_settings: {  }
     weight: 9
+    region: content
+  field_instagram_tags:
+    type: entity_reference_label
+    label: above
+    settings:
+      link: true
+    third_party_settings: {  }
+    weight: 10
     region: content
   id:
     type: string

@@ -1,7 +1,7 @@
 services:
   instag.importer:
     class: Drupal\instag\InstagramImporter
-    arguments: [ '@config.factory', '@logger.channel.instag', '@file.repository', '@file_system', '@http_client' ]
+    arguments: [ '@config.factory', '@logger.channel.instag', '@file.repository', '@file_system', '@http_client', '@entity_type.manager' ]
   logger.channel.instag:
     parent: logger.channel_base
     arguments: [ 'instag' ]

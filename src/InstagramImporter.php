@@ -6,11 +6,15 @@ namespace Drupal\instag;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Config\ImmutableConfig;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\StreamWrapper\PublicStream;
 use Drupal\datetime\Plugin\Field\FieldType\DateTimeItemInterface;
 use Drupal\file\FileRepositoryInterface;
 use Drupal\instag\Entity\InstagramPost;
+use Drupal\taxonomy\Entity\Term;
+use Drupal\taxonomy\TermInterface;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Instagram\Exception\InstagramAuthException;
@@ -33,6 +37,7 @@ class InstagramImporter {
   protected FileSystemInterface $fileSystem;
   protected Client $client;
   protected Api $api;
+  protected EntityTypeManagerInterface $entityTypeManager;
 
   /**
    * InstagramImporter constructor.
@@ -48,12 +53,13 @@ class InstagramImporter {
    * @param Client $client
    *   The HTTP client.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, LoggerInterface $logger, FileRepositoryInterface $fileRepository, FileSystemInterface $fileSystem, Client $client) {
+  public function __construct(ConfigFactoryInterface $config_factory, LoggerInterface $logger, FileRepositoryInterface $fileRepository, FileSystemInterface $fileSystem, Client $client, EntityTypeManagerInterface $entityTypeManager) {
     $this->config = $config_factory->get('instag.settings');
     $this->logger = $logger;
     $this->fileRepository = $fileRepository;
     $this->fileSystem = $fileSystem;
     $this->client = $client;
+    $this->entityTypeManager = $entityTypeManager;
     $this->initApi();
   }
 
@@ -138,15 +144,16 @@ class InstagramImporter {
         // Create media entities and add reference from post.
         $media_entities = $this->createMediaEntities($post);
         $entity->get('field_instagram_media')->setValue($media_entities);
+
+        // Create tags.
+        $tags = $this->createTags($post);
+        $entity->get('field_instagram_tags')->setValue($tags);
       }
       else {
         // Update fields.
         $entity->get('likes')->setValue($post->getLikes());
         $entity->get('view_count')->setValue($post->getVideoViewCount());
       }
-
-      // Tags.
-      //implode(", ", $post->getHashtags());
 
       $entity->save();
       $count++;
@@ -319,6 +326,56 @@ class InstagramImporter {
     }
 
     return $item;
+  }
+
+  /**
+   * Create tags for post.
+   *
+   * @param \Instagram\Model\Media $post
+   *
+   * @return array
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+   * @throws \Drupal\Core\Entity\EntityStorageException
+   */
+  protected function createTags(Media $post): array {
+    $tags = [];
+    $hashtags = $post->getHashtags();
+    foreach ($hashtags as $tag) {
+      $tag = $this->lookupTag($tag);
+      if (is_null($tag)) {
+        $tag = Term::create([
+          'vid' => 'instagram_tags',
+          'name' => $tag,
+        ]);
+        $tag->save();
+      }
+      $tags[] = $tag;
+    }
+
+    return $tags;
+  }
+
+  /**
+   * Lookup term based on name.
+   *
+   * @param string $tag
+   *
+   * @return \Drupal\Core\Entity\EntityInterface|NULL
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+   */
+  protected function lookupTag(string $tag): EntityInterface|NULL {
+    $storage = $this->entityTypeManager->getStorage('taxonomy_term');
+    $query = $storage->getQuery();
+    $tids = $query->condition('vid', 'instagram_tags')
+      ->condition('name', $tag)
+      ->execute();
+    if (!empty($tids)) {
+      return $storage->load(reset($tids));
+    }
+
+    return NULL;
   }
 
 }
