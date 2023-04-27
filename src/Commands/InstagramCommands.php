@@ -34,10 +34,12 @@ class InstagramCommands extends DrushCommands {
    *
    * @param string $tag
    *   The hashtag to import posts from.
+   * @param int $max
+   *   The maximum number of posts to import.
    * @command instag:import-tag
-   * @usage drush instag:import-tag drupal10party
+   * @usage drush instag:import-tag drupal10party 50
    */
-  public function importTag(string $tag): void {
+  public function importTag(string $tag, int $max = 25): void {
     /** @var \Drupal\instag\InstagramUserFeedImporter $importer */
     $importer = \Drupal::service('instag.importer');
     $count = $importer->importTag($tag);

@@ -125,8 +125,8 @@ class InstagramUserFeedImporter implements InstagramImporterInterface {
   /**
    * {@inheritdoc}
    */
-  public function importTag(string $tag): int {
-    $posts = $this->getPostsByTag($tag);
+  public function importTag(string $tag, int $max = 25): int {
+    $posts = $this->getPostsByTag($tag, $max);
     return $this->import($posts, NULL);
   }
 
@@ -166,7 +166,7 @@ class InstagramUserFeedImporter implements InstagramImporterInterface {
         $entity = InstagramPost::create([
           'uuid' => $post->getId(),
           'shortcode' => $post->getShortCode(),
-          'user' => $user,
+          'user' => $user ?? $post->getOwnerId(),
           'title' => $this->getTitle($post),
           'caption' => $this->getCaption($post),
           'type' => $post->getTypeName(),
@@ -234,13 +234,16 @@ class InstagramUserFeedImporter implements InstagramImporterInterface {
    *
    * @param string $tag
    *   The hashtag.
+   * @param int $max
+   *   Maximum number of posts to fetch.
    * @return array
    *
    * @throws \GuzzleHttp\Exception\GuzzleException
    * @throws \Psr\Cache\InvalidArgumentException
    */
-  protected function getPostsByTag(string $tag): array {
+  protected function getPostsByTag(string $tag, int $max = 25): array {
     $posts = [];
+    $count = 0;
     try {
       $this->login();
       $hashtag = $this->api->getHashtag($tag);
@@ -250,6 +253,8 @@ class InstagramUserFeedImporter implements InstagramImporterInterface {
       while ($cursor = $hashtag->getEndCursor()) {
         $medias = $this->api->getMoreHashtagMedias($tag, $cursor);
         $posts = array_merge($posts, $medias);
+        $count++;
+        if ($count >= $max) break;
         sleep(1);
       }
     }

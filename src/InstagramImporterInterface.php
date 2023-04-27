@@ -22,10 +22,12 @@ interface InstagramImporterInterface {
    *
    * @param string $tag
    *  The hashtag.
+   * @param int $max
+   *   The maximum number of posts to import.
    *
    * @return int
    *   Number of imported posts.
    */
-  public function importTag(string $tag): int;
+  public function importTag(string $tag, int $max = 25): int;
 
 }
