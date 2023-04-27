@@ -14,7 +14,6 @@ use Drupal\datetime\Plugin\Field\FieldType\DateTimeItemInterface;
 use Drupal\file\FileRepositoryInterface;
 use Drupal\instag\Entity\InstagramPost;
 use Drupal\taxonomy\Entity\Term;
-use Drupal\taxonomy\TermInterface;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Instagram\Exception\InstagramAuthException;
@@ -29,7 +28,7 @@ use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 /**
  * A service for importing Instagram content.
  */
-class InstagramImporter {
+class InstagramUserFeedImporter implements InstagramImporterInterface {
 
   protected ImmutableConfig $config;
   protected LoggerInterface $logger;
@@ -52,6 +51,8 @@ class InstagramImporter {
    *   The file system.
    * @param Client $client
    *   The HTTP client.
+   *
+   * @throws \Exception
    */
   public function __construct(ConfigFactoryInterface $config_factory, LoggerInterface $logger, FileRepositoryInterface $fileRepository, FileSystemInterface $fileSystem, Client $client, EntityTypeManagerInterface $entityTypeManager) {
     $this->config = $config_factory->get('instag.settings');
@@ -211,7 +212,7 @@ class InstagramImporter {
   }
 
   /**
-   * Assemble a title that is suitable for a entity title.
+   * Assemble a title that is suitable for an entity title.
    *
    * @param Media $post
    * @return string

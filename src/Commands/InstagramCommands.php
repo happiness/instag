@@ -21,7 +21,7 @@ class InstagramCommands extends DrushCommands {
    * @usage drush instag:import thisisbillgates
    */
   public function import(string $user): void {
-    /** @var \Drupal\instag\InstagramImporter $importer */
+    /** @var \Drupal\instag\InstagramUserFeedImporter $importer */
     $importer = \Drupal::service('instag.importer');
     $count = $importer->import($user);
 
