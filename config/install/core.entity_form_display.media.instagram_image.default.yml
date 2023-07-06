@@ -1,7 +1,7 @@
 status: true
 dependencies:
   config:
-    - field.field.media.instagram_image.field_media_image
+    - field.field.media.instagram_image.field_instagram_image
     - image.style.thumbnail
     - media.type.instagram_image
   module:

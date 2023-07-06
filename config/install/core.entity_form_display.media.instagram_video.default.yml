@@ -1,7 +1,7 @@
 status: true
 dependencies:
   config:
-    - field.field.media.instagram_video.field_media_video_file
+    - field.field.media.instagram_video.field_instagram_video_file
     - media.type.instagram_video
   module:
     - file

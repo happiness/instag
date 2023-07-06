@@ -1,12 +1,12 @@
 status: true
 dependencies:
   config:
-    - field.storage.media.field_media_video_file
+    - field.storage.media.field_instagram_video_file
     - media.type.instagram_video
   module:
     - file
-id: media.instagram_video.field_media_video_file
-field_name: field_media_video_file
+id: media.instagram_video.field_instagram_video_file
+field_name: field_instagram_video_file
 entity_type: media
 bundle: instagram_video
 label: 'Video file'
