@@ -119,7 +119,7 @@ class InstagramUserFeedImporter implements InstagramImporterInterface {
    */
   public function importProfile(string $user): int {
     $posts = $this->getPosts($user, $user);
-    return $this->import($posts);
+    return $this->import($posts, NULL);
   }
 
   /**
