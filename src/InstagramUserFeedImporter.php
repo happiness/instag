@@ -382,14 +382,14 @@ class InstagramUserFeedImporter implements InstagramImporterInterface {
     if ($media->getVideoUrl()) {
       $item = [
         'bundle' => 'instagram_video',
-        'field' => 'field_media_video_file',
+        'field' => 'field_instagram_video_file',
         'url' => $media->getVideoUrl(),
       ];
     }
     else {
       $item = [
         'bundle' => 'instagram_image',
-        'field' => 'field_media_image',
+        'field' => 'field_instagram_image',
       ];
 
       if ($media instanceof MediaDetailed) {
