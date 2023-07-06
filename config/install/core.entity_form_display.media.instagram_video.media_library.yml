@@ -19,7 +19,7 @@ content:
     third_party_settings: {  }
 hidden:
   created: true
-  field_media_video_file: true
+  field_instagram_video_file: true
   path: true
   status: true
   uid: true

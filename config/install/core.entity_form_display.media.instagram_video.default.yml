@@ -17,7 +17,7 @@ content:
     region: content
     settings: {  }
     third_party_settings: {  }
-  field_media_video_file:
+  field_instagram_video_file:
     type: file_generic
     weight: 0
     region: content
