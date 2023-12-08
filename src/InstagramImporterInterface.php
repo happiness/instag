@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\instag;
 
+use Drupal\instag\Entity\InstagramPost;
 use Instagram\Model\Media;
 
 interface InstagramImporterInterface {
@@ -51,7 +52,8 @@ interface InstagramImporterInterface {
    *
    * @param Media $post
    * @param string|null $user
+   * @return InstagramPost
    */
-  public function import(Media $post, ?string $user = NULL): void;
+  public function import(Media $post, ?string $user = NULL): InstagramPost;
 
 }

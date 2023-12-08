@@ -190,7 +190,7 @@ class InstagramUserFeedImporter implements InstagramImporterInterface {
   /**
    * {@inheritdoc}
    */
-  public function import(Media $post, ?string $user = NULL): void {
+  public function import(Media $post, ?string $user = NULL): InstagramPost {
     // Load existing post.
     $entity = InstagramPost::loadByUUID($post->getId());
 
@@ -234,6 +234,8 @@ class InstagramUserFeedImporter implements InstagramImporterInterface {
     }
 
     $entity->save();
+
+    return $entity;
   }
 
   /**

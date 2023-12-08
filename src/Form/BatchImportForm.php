@@ -74,18 +74,16 @@ class BatchImportForm extends FormBase {
       // Get posts.
       try {
         $values = $form_state->getValues();
-        $posts = [];
         if ($values['submit'] == $this->t('Import user')) {
-          $posts = $importer->getPosts($values['username']);
+          $method = 'getPosts';
+          $id = $values['username'];
         }
         else {
-          $posts = $importer->getPostsByTag($values['hashtag']);
+          $method = 'getPostsByTag';
+          $id = $values['hashtag'];
         }
 
-        // Add posts to batch.
-        foreach ($posts as $post) {
-          $batch['operations'][] = [['\Drupal\instag\Form\BatchImportForm', 'batchProcess'], [$post]];
-        }
+        $batch['operations'][] = [['\Drupal\instag\Form\BatchImportForm', 'batchProcess'], [$method, $id]];
 
         // Set batch.
         batch_set($batch);
@@ -98,16 +96,44 @@ class BatchImportForm extends FormBase {
     /**
      * Batch process callback.
      */
-    public static function batchProcess(Media $post, &$context): void {
+    public static function batchProcess(string $method, string $id, &$context): void {
       /** @var \Drupal\instag\InstagramImporterInterface $importer */
       $importer = \Drupal::service('instag.importer');
+
       try {
-        $importer->import($post);
-        $context['message'] = 'Importing post ' . $post->getId();
+        $posts = $importer->$method($id);
       }
       catch (\Throwable $e) {
-        $context['message'] = 'Error importing post ' . $post->getId();
-        \Drupal::messenger()->addError(t('Error importing post @id: @message', ['@id' => $post->getId(), '@message' => $e->getMessage()]));
+        \Drupal::messenger()->addError(t('Error fetching posts: @message', ['@message' => $e->getMessage()]));
+        return;
+      }
+
+      if (!isset($context['sandbox']['progress'])) {
+        $context['sandbox']['progress'] = 0;
+        $context['sandbox']['current_id'] = 0;
+        $context['sandbox']['max'] = sizeof($posts);
+      }
+
+      $batch_size = 5;
+      $posts = array_slice($posts, $context['sandbox']['progress'], $batch_size);
+
+      foreach ($posts as $post) {
+        try {
+          $entity = $importer->import($post);
+          $context['results'][] = $entity->label();
+          $context['message'] = t('Imported post @title', ['@title' => $entity->label()]);
+        }
+        catch (\Throwable $e) {
+          $context['message'] = t('Error importing post @id', ['@id' => $post->getId()]);
+          \Drupal::messenger()->addError(t('Error importing post @id: @message', ['@id' => $post->getId(), '@message' => $e->getMessage()]));
+        }
+
+        $context['sandbox']['progress']++;
+        $context['sandbox']['current_id'] = $post->getId();
+      }
+
+      if ($context['sandbox']['progress'] != $context['sandbox']['max']) {
+        $context['finished'] = $context['sandbox']['progress'] / $context['sandbox']['max'];
       }
     }
 
@@ -116,10 +142,10 @@ class BatchImportForm extends FormBase {
      */
     public static function batchFinished($success, $results, $operations, $elapsed): void {
       if ($success) {
-        \Drupal::messenger()->addStatus(t('The import has completed successfully.'));
+        \Drupal::messenger()->addStatus(t('The import was completed successfully.'));
       }
       else {
-        \Drupal::messenger()->addError(t('There was an error with the batch import.'));
+        \Drupal::messenger()->addError(t('Error occurred during import. Please try again later.'));
       }
     }
 }
