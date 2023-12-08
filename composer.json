@@ -20,7 +20,6 @@
         "source": "https://git.drupalcode.org/project/instag"
     },
     "require": {
-        "pgrimaud/instagram-user-feed": "^6.16",
-        "drush/drush": "^11.6"
+        "pgrimaud/instagram-user-feed": "^6.16"
     }
 }
