@@ -21,6 +21,6 @@
     },
     "require": {
         "pgrimaud/instagram-user-feed": "^6.16",
-        "drush/drush": "^10.0"
+        "drush/drush": "^11.6"
     }
 }

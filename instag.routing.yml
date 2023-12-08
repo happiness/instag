@@ -26,6 +26,16 @@ instag.instagram_post_add:
   options:
     _admin_route: TRUE
 
+instag.import_posts:
+  path: '/instagram-post/import'
+  defaults:
+    _form: '\Drupal\instag\Form\BatchImportForm'
+    _title: 'Import Instagram posts'
+  requirements:
+    _permission: 'administer instagram entity'
+  options:
+    _admin_route: TRUE
+
 entity.instagram_post.edit_form:
   path: '/instagram-post/{instagram_post}/edit'
   defaults:

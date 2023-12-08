@@ -3,3 +3,9 @@ instag.instagram_post_add:
   title: 'Add Instagram post'
   appears_on:
     - entity.instagram_post.collection
+
+instag.instagram_post_import:
+  route_name: instag.import_posts
+  title: 'Import Instagram posts'
+  appears_on:
+    - entity.instagram_post.collection

@@ -24,6 +24,8 @@ use Psr\Cache\InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 use Instagram\Api;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
+use Symfony\Component\Console\Output\ConsoleOutput;
+use Symfony\Component\Console\Helper\ProgressBar;
 
 /**
  * A service for importing Instagram content.
@@ -37,6 +39,7 @@ class InstagramUserFeedImporter implements InstagramImporterInterface {
   protected Client $client;
   protected Api $api;
   protected EntityTypeManagerInterface $entityTypeManager;
+  protected ?ConsoleOutput $output = NULL;
 
   /**
    * InstagramImporter constructor.
@@ -62,6 +65,13 @@ class InstagramUserFeedImporter implements InstagramImporterInterface {
     $this->client = $client;
     $this->entityTypeManager = $entityTypeManager;
     $this->initApi();
+  }
+
+  /**
+   * Set console output.
+   */
+  public function setOutput(ConsoleOutput $output): void {
+    $this->output = $output;
   }
 
   /**
@@ -117,99 +127,119 @@ class InstagramUserFeedImporter implements InstagramImporterInterface {
   /**
    * {@inheritdoc}
    */
-  public function importProfile(string $user): int {
-    $posts = $this->getPosts($user, $user);
-    return $this->import($posts, NULL);
+  public function importProfile(string $user): void {
+    try {
+      $posts = $this->getPosts($user);
+
+      // TODO: Refactor this section into a separate method. Also used by importTag().
+      // If we have a console output, show a progress bar.
+      $progress = NULL;
+      if ($this->output instanceof ConsoleOutput) {
+        $num = sizeof($posts);
+        $progress = new ProgressBar($this->output, $num);
+        $progress->setFormat('verbose');
+        $progress->start();
+      }
+
+      foreach ($posts as $post) {
+        $this->import($post);
+        if (!is_null($progress)) $progress->advance();
+      }
+
+      if ($this->output instanceof ConsoleOutput) {
+        $progress->finish();
+        $this->output->writeln('');
+      }
+    }
+    catch (\Throwable $e) {
+      $this->logger->error('Failed to fetch Instagram posts. Message was: ' . $e->getMessage());
+    }
   }
 
   /**
    * {@inheritdoc}
    */
-  public function importTag(string $tag, int $max = 25): int {
-    $posts = $this->getPostsByTag($tag, $max);
-    return $this->import($posts, NULL);
+  public function importTag(string $tag, int $max = 25): void {
+    try {
+      $posts = $this->getPostsByTag($tag, $max);
+
+      // If we have a console output, show a progress bar.
+      $progress = NULL;
+      if ($this->output instanceof ConsoleOutput) {
+        $num = sizeof($posts);
+        $progress = new ProgressBar($this->output, $num);
+        $progress->setFormat('verbose');
+        $progress->start();
+      }
+
+      foreach ($posts as $post) {
+        $this->import($post);
+        if (!is_null($progress)) $progress->advance();
+      }
+
+      if ($this->output instanceof ConsoleOutput) {
+        $progress->finish();
+        $this->output->writeln('');
+      }
+    }
+    catch (\Throwable $e) {
+      $this->logger->error('Failed to fetch Instagram posts. Message was: ' . $e->getMessage());
+    }
   }
 
   /**
-   * Import posts.
-   *
-   * @param array $posts
-   *
-   * @return int
-   *   Number of imported posts.
-   *
-   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
-   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
-   * @throws \Drupal\Core\Entity\EntityStorageException
-   * @throws \Drupal\Core\TypedData\Exception\ReadOnlyException
-   * @throws \Instagram\Exception\InstagramAuthException
-   * @throws \Instagram\Exception\InstagramFetchException
+   * {@inheritdoc}
    */
-  protected function import(array $posts, string|null $user): int {
-    $count = 0;
+  public function import(Media $post, ?string $user = NULL): void {
+    // Load existing post.
+    $entity = InstagramPost::loadByUUID($post->getId());
 
-    /** @var Media $post */
-    foreach ($posts as $post) {
-      // Load existing post.
-      $entity = InstagramPost::loadByUUID($post->getId());
+    // Convert date to storage format.
+    $date = $post->getDate();
+    $date->setTimezone(new \DateTimezone(DateTimeItemInterface::STORAGE_TIMEZONE));
+    $date_string = $date->format(DateTimeItemInterface::DATETIME_STORAGE_FORMAT);
 
-      // Convert date to storage format.
-      $date = $post->getDate();
-      $date->setTimezone(new \DateTimezone(DateTimeItemInterface::STORAGE_TIMEZONE));
-      $date_string = $date->format(DateTimeItemInterface::DATETIME_STORAGE_FORMAT);
+    // Timestamp for created and changed.
+    $now = time();
 
-      // Timestamp for created and changed.
-      $now = time();
+    // Create Instagram post.
+    if (is_null($entity)) {
+      $entity = InstagramPost::create([
+        'uuid' => $post->getId(),
+        'shortcode' => $post->getShortCode(),
+        'user' => $user ?? $post->getOwnerId(),
+        'title' => $this->getTitle($post),
+        'caption' => $this->getCaption($post),
+        'type' => $post->getTypeName(),
+        'date' => $date_string,
+        'likes' => $post->getLikes(),
+        'view_count' => $post->getVideoViewCount(),
+        'created' => $now,
+        'changed' => $now,
+      ]);
 
-      // Create Instagram post.
-      if (is_null($entity)) {
-        $entity = InstagramPost::create([
-          'uuid' => $post->getId(),
-          'shortcode' => $post->getShortCode(),
-          'user' => $user ?? $post->getOwnerId(),
-          'title' => $this->getTitle($post),
-          'caption' => $this->getCaption($post),
-          'type' => $post->getTypeName(),
-          'date' => $date_string,
-          'likes' => $post->getLikes(),
-          'view_count' => $post->getVideoViewCount(),
-          'created' => $now,
-          'changed' => $now,
-        ]);
+      // Create media entities and add reference from post.
+      $media_entities = $this->createMediaEntities($post);
+      $entity->get('field_instagram_media')->setValue($media_entities);
 
-        // Create media entities and add reference from post.
-        $media_entities = $this->createMediaEntities($post);
-        $entity->get('field_instagram_media')->setValue($media_entities);
-
-        // Create tags.
-        $tags = $this->createTags($post);
-        $entity->get('field_instagram_tags')->setValue($tags);
-      }
-      else {
-        // Update fields.
-        $entity->get('likes')->setValue($post->getLikes());
-        $entity->get('view_count')->setValue($post->getVideoViewCount());
-        $entity->get('changed')->setValue($now);
-      }
-
-      $entity->save();
-      $count++;
+      // Create tags.
+      $tags = $this->createTags($post);
+      $entity->get('field_instagram_tags')->setValue($tags);
+    }
+    else {
+      // Update fields.
+      $entity->get('likes')->setValue($post->getLikes());
+      $entity->get('view_count')->setValue($post->getVideoViewCount());
+      $entity->get('changed')->setValue($now);
     }
 
-    return $count;
+    $entity->save();
   }
 
   /**
-   * Get posts from Instagram.
-   *
-   * @param string $user
-   *   The username.
-   * @return array
-   *
-   * @throws GuzzleException
-   * @throws InvalidArgumentException
+   * {@inheritdoc}
    */
-  protected function getPosts(string $user): array {
+  public function getPosts(string $user): array {
     $posts = [];
     try {
       $this->login();
@@ -230,18 +260,9 @@ class InstagramUserFeedImporter implements InstagramImporterInterface {
   }
 
   /**
-   * Get posts by hashtag.
-   *
-   * @param string $tag
-   *   The hashtag.
-   * @param int $max
-   *   Maximum number of posts to fetch.
-   * @return array
-   *
-   * @throws \GuzzleHttp\Exception\GuzzleException
-   * @throws \Psr\Cache\InvalidArgumentException
+   * {@inheritdoc}
    */
-  protected function getPostsByTag(string $tag, int $max = 25): array {
+  public function getPostsByTag(string $tag, int $max = 25): array {
     $posts = [];
     $count = 0;
     try {
