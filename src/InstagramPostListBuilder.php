@@ -58,6 +58,7 @@ class InstagramPostListBuilder extends EntityListBuilder {
     $header['id'] = $this->t('ID');
     $header['user'] = $this->t('User');
     $header['title'] = $this->t('Title');
+    $header['type'] = $this->t('Type');
     $header['date'] = $this->t('Date');
     $header['created'] = $this->t('Created');
     $header['changed'] = $this->t('Changed');
@@ -72,6 +73,7 @@ class InstagramPostListBuilder extends EntityListBuilder {
     $row['id'] = $entity->id();
     $row['user'] = $entity->user->value;
     $row['title'] = $entity->toLink()->toString();
+    $row['type'] = $entity->type->value;
     $row['date'] = $this->dateFormatter->format(strtotime($entity->date->value), 'short');
     $row['created'] = $this->dateFormatter->format($entity->getCreatedTime(), 'short');
     $row['changed'] =$this->dateFormatter->format($entity->getChangedTime(), 'short');
