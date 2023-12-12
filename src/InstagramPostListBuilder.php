@@ -7,6 +7,7 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityListBuilder;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Entity\Query\QueryInterface;
 use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -56,12 +57,11 @@ class InstagramPostListBuilder extends EntityListBuilder {
    */
   public function buildHeader() {
     $header['id'] = $this->t('ID');
-    $header['user'] = $this->t('User');
     $header['title'] = $this->t('Title');
     $header['type'] = $this->t('Type');
+    $header['likes'] = $this->t('Likes');
     $header['date'] = $this->t('Date');
-    $header['created'] = $this->t('Created');
-    $header['changed'] = $this->t('Changed');
+    $header['user'] = $this->t('User ID');
     return $header + parent::buildHeader();
   }
 
@@ -71,13 +71,30 @@ class InstagramPostListBuilder extends EntityListBuilder {
   public function buildRow(EntityInterface $entity) {
     /* @var $entity \Drupal\instag\Entity\InstagramPost */
     $row['id'] = $entity->id();
-    $row['user'] = $entity->user->value;
     $row['title'] = $entity->toLink()->toString();
     $row['type'] = $entity->type->value;
-    $row['date'] = $this->dateFormatter->format(strtotime($entity->date->value), 'short');
-    $row['created'] = $this->dateFormatter->format($entity->getCreatedTime(), 'short');
-    $row['changed'] =$this->dateFormatter->format($entity->getChangedTime(), 'short');
+    $row['likes'] = $entity->likes->value;
+    $row['date'] = $this->dateFormatter->format(strtotime($entity->date->value), 'html_date');
+    $row['user'] = $entity->user->value;
     return $row + parent::buildRow($entity);
+  }
+
+  /**
+   * Returns a query object for loading entity IDs from the storage.
+   *
+   * @return \Drupal\Core\Entity\Query\QueryInterface
+   *   A query object used to load entity IDs.
+   */
+  protected function getEntityListQuery(): QueryInterface {
+    $query = $this->getStorage()->getQuery()
+      ->accessCheck(TRUE)
+      ->sort('date', 'DESC');
+
+    // Only add the pager if a limit is specified.
+    if ($this->limit) {
+      $query->pager($this->limit);
+    }
+    return $query;
   }
 
 }
