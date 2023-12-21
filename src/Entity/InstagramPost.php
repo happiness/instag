@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Drupal\instag\Entity;
@@ -46,22 +47,29 @@ class InstagramPost extends ContentEntityBase implements ContentEntityInterface 
   /**
    * {@inheritdoc}
    */
-  public function label() {
+  public function label(): string {
     return $this->title->value;
   }
 
   /**
-   * {@inheritdoc}
+   * Get created timestamp.
    */
-  public function getCreatedTime() {
+  public function getCreatedTime(): int {
     return $this->get('created')->value;
   }
 
   /**
-   * {@inheritdoc}
+   * Get changed timestamp.
    */
-  public function getChangedTime() {
+  public function getChangedTime(): int {
     return $this->get('changed')->value;
+  }
+
+  /**
+   * Get link.
+   */
+  public function getLink(): string {
+    return sprintf('https://www.instagram.com/p/%s', $this->get('shortcode')->value);
   }
 
   /**
@@ -218,7 +226,7 @@ class InstagramPost extends ContentEntityBase implements ContentEntityInterface 
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
-  public static function loadByUUID(int $uuid) {
+  public static function loadByUUID(int $uuid): EntityInterface|NULL {
     $entity_type_manager = \Drupal::entityTypeManager();
     $storage = $entity_type_manager->getStorage('instagram_post');
     $query = $storage->getQuery();

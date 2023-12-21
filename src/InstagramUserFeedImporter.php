@@ -360,6 +360,12 @@ class InstagramUserFeedImporter implements InstagramImporterInterface {
         'status' => 1
       ]);
       $media->get($item['field'])->setValue(['target_id' => $file->id()]);
+      if (isset($item['alt'])) {
+        $media->get($item['field'])->setValue(['alt' => $item['alt']]);
+      }
+      if (isset($item['title'])) {
+        $media->get($item['field'])->setValue(['title' => $item['title']]);
+      }
       $media->save();
       $media_entities[] = $media;
     }
@@ -410,9 +416,12 @@ class InstagramUserFeedImporter implements InstagramImporterInterface {
       ];
     }
     else {
+      $title = $this->getTitle($media);
       $item = [
         'bundle' => 'instagram_image',
         'field' => 'field_instagram_image',
+        'alt' => $title,
+        'title' => $title,
       ];
 
       if ($media instanceof MediaDetailed) {
