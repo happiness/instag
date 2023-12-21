@@ -1,0 +1,72 @@
+<?php
+
+/**
+ * @file
+ * Contains install/uninstall/upgrade hooks for the instag module.
+ */
+
+use Drupal\Core\Database\Database;
+use Drupal\Core\Field\BaseFieldDefinition;
+
+/**
+ * Add sticky and status fields to the instagram_post.
+ */
+function instag_update_91001() {
+  $schema = Database::getConnection()->schema();
+
+  // Add sticky field to the instagram_post table.
+  if (!$schema->fieldExists('instagram_post', 'sticky')) {
+    $schema->addField('instagram_post', 'sticky', [
+      'type' => 'int',
+      'size' => 'tiny',
+      'description' => 'Sticky status of the post.',
+      'not null' => TRUE,
+      'default' => 0,
+    ]);
+
+    $storage_definition = BaseFieldDefinition::create('boolean')
+      ->setLabel(t('Sticky at top of lists'))
+      ->setDescription(t('Whether the post should be displayed on top of lists.'))
+      ->setDefaultValue(FALSE)
+      ->setSettings(['on_label' => t('Published'), 'off_label' => ('Unpublished')])
+      ->setDisplayOptions('form', [
+        'type' => 'boolean_checkbox',
+        'weight' => 9,
+      ]);
+
+    $update_manager = \Drupal::entityDefinitionUpdateManager();
+    $update_manager->installFieldStorageDefinition('sticky', 'instagram_post', 'instag', $storage_definition);
+  }
+
+  // Add status field to the instagram_post table.
+  if (!$schema->fieldExists('instagram_post', 'status')) {
+    $schema->addField('instagram_post', 'status', [
+      'type' => 'int',
+      'size' => 'tiny',
+      'description' => 'Status of the post.',
+      'not null' => TRUE,
+      'default' => 1,
+    ]);
+
+    $storage_definition = BaseFieldDefinition::create('boolean')
+      ->setLabel(t('Published'))
+      ->setDescription(t('The status of the entity.'))
+      ->setDefaultValue(TRUE)
+      ->setDisplayOptions('form', [
+        'type' => 'boolean_checkbox',
+        'weight' => 10,
+      ]);
+
+    $update_manager = \Drupal::entityDefinitionUpdateManager();
+    $update_manager->installFieldStorageDefinition('status', 'instagram_post', 'instag', $storage_definition);
+  }
+}
+
+/**
+ * Set all instagram posts to published.
+ */
+function instag_update_91002() {
+  Database::getConnection()->update('instagram_post')
+    ->fields(['status' => 1])
+    ->execute();
+}

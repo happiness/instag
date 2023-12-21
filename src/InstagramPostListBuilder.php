@@ -62,6 +62,7 @@ class InstagramPostListBuilder extends EntityListBuilder {
     $header['likes'] = $this->t('Likes');
     $header['date'] = $this->t('Date');
     $header['user'] = $this->t('User ID');
+    $header['status'] = $this->t('Status');
     return $header + parent::buildHeader();
   }
 
@@ -75,7 +76,8 @@ class InstagramPostListBuilder extends EntityListBuilder {
     $row['type'] = $entity->type->value;
     $row['likes'] = $entity->likes->value;
     $row['date'] = $this->dateFormatter->format(strtotime($entity->date->value), 'html_date');
-    $row['user'] = $entity->user->value;
+    $row['user'] = $entity->user->value ?? t('Custom post');
+    $row['status'] = $entity->status->value ? t('Published') : t('Unpublished');
     return $row + parent::buildRow($entity);
   }
 

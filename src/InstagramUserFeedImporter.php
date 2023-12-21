@@ -214,6 +214,8 @@ class InstagramUserFeedImporter implements InstagramImporterInterface {
         'date' => $date_string,
         'likes' => $post->getLikes(),
         'view_count' => $post->getVideoViewCount(),
+        'sticky' => 0,
+        'status' => 1,
         'created' => $now,
         'changed' => $now,
       ]);

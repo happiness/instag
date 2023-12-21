@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\instag\Entity;
 
+use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityInterface;
@@ -116,6 +117,7 @@ class InstagramPost extends ContentEntityBase implements ContentEntityInterface 
     $fields['title'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Title'))
       ->setDescription(t('The title of the post.'))
+      ->setRequired(TRUE)
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'string',
@@ -145,21 +147,36 @@ class InstagramPost extends ContentEntityBase implements ContentEntityInterface 
       ->setDisplayConfigurable('view', TRUE);
 
     // Type, the type of the post. Can be either GraphImage or GraphSidecar.
-    $fields['type'] = BaseFieldDefinition::create('string')
+    $fields['type'] = BaseFieldDefinition::create('list_string')
       ->setLabel(t('Type'))
       ->setDescription(t('The type of the entity.'))
       ->setReadOnly(TRUE)
+      ->setRequired(TRUE)
+      ->setDefaultValue('GraphImage')
+      ->setSettings([
+        'allowed_values' => [
+          'GraphImage' => 'GraphImage',
+          'GraphSidecar' => 'GraphSidecar',
+        ],
+      ])
       ->setDisplayOptions('view', [
         'label' => 'above',
-        'type' => 'string',
+        'type' => 'list_default',
         'weight' => 5,
       ])
-      ->setDisplayConfigurable('view', TRUE);
+      ->setDisplayOptions('form', [
+        'type' => 'options_select',
+        'weight' => 5,
+      ])
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayConfigurable('form', TRUE);
 
     // Date, the date the post was published.
     $fields['date'] = BaseFieldDefinition::create('datetime')
       ->setLabel(t('Date'))
       ->setDescription('The date the post was published.')
+      ->setRequired(TRUE)
+      ->setDefaultValue(['default_date_type' => 'custom', 'default_date' => date('Y-m-d H:i:s')])
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'datetime_default',
@@ -176,6 +193,7 @@ class InstagramPost extends ContentEntityBase implements ContentEntityInterface 
     $fields['likes'] = BaseFieldDefinition::create('integer')
       ->setLabel(t('Likes'))
       ->setDescription(t('Number of likes.'))
+      ->setRequired(TRUE)
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'number',
@@ -185,6 +203,7 @@ class InstagramPost extends ContentEntityBase implements ContentEntityInterface 
         'type' => 'number',
         'weight' => 7,
       ])
+      ->setDefaultValue(0)
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
@@ -192,6 +211,7 @@ class InstagramPost extends ContentEntityBase implements ContentEntityInterface 
     $fields['view_count'] = BaseFieldDefinition::create('integer')
       ->setLabel(t('Video view count'))
       ->setDescription(t('Number of views a video has.'))
+      ->setRequired(TRUE)
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'number',
@@ -201,8 +221,31 @@ class InstagramPost extends ContentEntityBase implements ContentEntityInterface 
         'type' => 'number',
         'weight' => 8,
       ])
+      ->setDefaultValue(0)
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
+
+    // Sticky, whether the post should be displayed on top of the list.
+    $fields['sticky'] = BaseFieldDefinition::create('boolean')
+      ->setLabel(t('Sticky at top of lists'))
+      ->setDescription(t('Whether the post should be displayed on top of lists.'))
+      ->setDefaultValue(FALSE)
+      ->setSettings(['on_label' => t('Published'), 'off_label' => ('Unpublished')])
+      ->setDisplayOptions('form', [
+        'type' => 'boolean_checkbox',
+        'weight' => 9,
+      ]);
+
+    // Status, the status of the post. Can be either published or unpublished.
+    $fields['status'] = BaseFieldDefinition::create('boolean')
+      ->setLabel(t('Published'))
+      ->setDescription(t('The status of the entity.'))
+      ->setDefaultValue(TRUE)
+      ->setDisplayOptions('form', [
+        'type' => 'boolean_checkbox',
+        'weight' => 10,
+      ]);
+
 
     // Created, the timestamp for when the entity was created.
     $fields['created'] = BaseFieldDefinition::create('created')
