@@ -21,6 +21,7 @@ class BatchImportForm extends FormBase {
      * {@inheritdoc}
      */
     public function buildForm(array $form, FormStateInterface $form_state): array {
+      $store = \Drupal::keyValue('instag');
 
       $form['user'] = [
         '#type' => 'details',
@@ -30,6 +31,7 @@ class BatchImportForm extends FormBase {
       $form['user']['username'] = [
         '#type' => 'textfield',
         '#title' => $this->t('Username'),
+        '#default_value' => $store->get('username'),
         '#description' => $this->t('The username of the user to import'),
       ];
 
@@ -46,6 +48,7 @@ class BatchImportForm extends FormBase {
       $form['tag']['hashtag'] = [
         '#type' => 'textfield',
         '#title' => $this->t('Hashtag'),
+        '#default_value' => $store->get('hashtag'),
         '#description' => $this->t('The hashtag to import, without the <em>#</em> symbol.'),
       ];
 
@@ -61,6 +64,11 @@ class BatchImportForm extends FormBase {
      * {@inheritdoc}
      */
     public function submitForm(array &$form, FormStateInterface $form_state): void {
+      // Save entered values for next time.
+      $store = \Drupal::keyValue('instag');
+      $store->set('username', $form_state->getValue('username'));
+      $store->set('hashtag', $form_state->getValue('hashtag'));
+
       // Define batch.
       $batch = [
         'title' => t('Importing Instagram posts'),
