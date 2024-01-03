@@ -5,3 +5,4 @@ type: module
 dependencies:
   - drupal:media
   - drupal:taxonomy
+  - drupal:media_library
