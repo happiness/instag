@@ -76,13 +76,11 @@ class BatchImportForm extends FormBase {
         'finished' => ['\Drupal\instag\Form\BatchImportForm', 'batchFinished'],
       ];
 
-      /** @var \Drupal\instag\InstagramImporterInterface $importer */
-      $importer = \Drupal::service('instag.importer');
-
       // Get posts.
       try {
         $values = $form_state->getValues();
-        if ($values['submit'] == $this->t('Import user')) {
+        $trigger = $form_state->getTriggeringElement()['#value'];
+        if ($trigger == $this->t('Import user')) {
           $method = 'getPosts';
           $id = $values['username'];
         }
