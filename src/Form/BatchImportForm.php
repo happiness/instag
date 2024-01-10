@@ -131,7 +131,7 @@ class BatchImportForm extends FormBase {
       if (!isset($context['sandbox']['progress'])) {
         $context['sandbox']['progress'] = 0;
         $context['sandbox']['current_id'] = 0;
-        $context['sandbox']['max'] = $limit; // To import everything use "count($posts)".
+        $context['sandbox']['max'] = $limit;
       }
 
       $batch_size = 5;
