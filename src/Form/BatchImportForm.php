@@ -121,7 +121,15 @@ class BatchImportForm extends FormBase {
       $importer = \Drupal::service('instag.importer');
 
       try {
-        $posts = $importer->$method($id);
+        $cid = 'instag_' . $method . '_' . $id;
+        $posts = NULL;
+        if ($cache = \Drupal::cache()->get($cid)) {
+          $posts = $cache->data;
+        }
+        else {
+          $posts = $importer->$method($id);
+          \Drupal::cache()->set($cid, $posts, strtotime('+1 hour'));
+        }
       }
       catch (\Throwable $e) {
         \Drupal::messenger()->addError(t('Error fetching posts: @message', ['@message' => $e->getMessage()]));
@@ -129,12 +137,15 @@ class BatchImportForm extends FormBase {
       }
 
       if (!isset($context['sandbox']['progress'])) {
+        if (count($posts) < $limit) {
+          $limit = count($posts);
+        }
         $context['sandbox']['progress'] = 0;
         $context['sandbox']['current_id'] = 0;
         $context['sandbox']['max'] = $limit;
       }
 
-      $batch_size = 5;
+      $batch_size = 1;
       $posts = array_slice($posts, $context['sandbox']['progress'], $batch_size);
 
       foreach ($posts as $post) {
