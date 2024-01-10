@@ -23,16 +23,26 @@ class BatchImportForm extends FormBase {
     public function buildForm(array $form, FormStateInterface $form_state): array {
       $store = \Drupal::keyValue('instag');
 
+      $form['limit'] = [
+        '#type' => 'number',
+        '#title' => $this->t('Limit'),
+        '#min' => 1,
+        '#max' => 100,
+        '#default_value' => $store->get('limit', 50),
+        '#description' => $this->t('Maximum number of posts to import.'),
+      ];
+
       $form['user'] = [
         '#type' => 'details',
-        '#title' => $this->t('Import user')
+        '#title' => $this->t('Import user'),
+        '#open' => TRUE,
       ];
 
       $form['user']['username'] = [
         '#type' => 'textfield',
         '#title' => $this->t('Username'),
         '#default_value' => $store->get('username'),
-        '#description' => $this->t('The username of the user to import'),
+        '#description' => $this->t('The username of the user to import.'),
       ];
 
       $form['user']['submit'] = [
@@ -42,7 +52,8 @@ class BatchImportForm extends FormBase {
 
       $form['tag'] = [
         '#type' => 'details',
-        '#title' => $this->t('Import tag')
+        '#title' => $this->t('Import tag'),
+        '#open' => TRUE,
       ];
 
       $form['tag']['hashtag'] = [
@@ -79,17 +90,20 @@ class BatchImportForm extends FormBase {
       // Get posts.
       try {
         $values = $form_state->getValues();
-        $trigger = $form_state->getTriggeringElement()['#value'];
-        if ($trigger == $this->t('Import user')) {
+        $trigger = $form_state->getTriggeringElement()['#id'];
+        if ($trigger == 'edit-submit') {
           $method = 'getPosts';
           $id = $values['username'];
         }
-        else {
+        elseif ($trigger == 'edit-submit--2') {
           $method = 'getPostsByTag';
           $id = $values['hashtag'];
         }
+        else {
+          return;
+        }
 
-        $batch['operations'][] = [['\Drupal\instag\Form\BatchImportForm', 'batchProcess'], [$method, $id]];
+        $batch['operations'][] = [['\Drupal\instag\Form\BatchImportForm', 'batchProcess'], [$method, $id, $values['limit']]];
 
         // Set batch.
         batch_set($batch);
@@ -102,7 +116,7 @@ class BatchImportForm extends FormBase {
     /**
      * Batch process callback.
      */
-    public static function batchProcess(string $method, string $id, &$context): void {
+    public static function batchProcess(string $method, string $id, int $limit, &$context): void {
       /** @var \Drupal\instag\InstagramImporterInterface $importer */
       $importer = \Drupal::service('instag.importer');
 
@@ -117,7 +131,7 @@ class BatchImportForm extends FormBase {
       if (!isset($context['sandbox']['progress'])) {
         $context['sandbox']['progress'] = 0;
         $context['sandbox']['current_id'] = 0;
-        $context['sandbox']['max'] = sizeof($posts);
+        $context['sandbox']['max'] = $limit; // To import everything use "count($posts)".
       }
 
       $batch_size = 5;
